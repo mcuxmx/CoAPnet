@@ -29,6 +29,11 @@ namespace CoAPnet.Client
             ApplyUriPath(request, message);
             ApplyUriQuery(request, message);
 
+            foreach(CoapMessageOption o in request.Options.Others)
+            {
+                message.Options.Add(o);
+            }
+
             return message;
         }
 

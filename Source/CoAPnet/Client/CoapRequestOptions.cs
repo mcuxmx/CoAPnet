@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using CoAPnet.Protocol.Options;
+using System.Collections.Generic;
 
 namespace CoAPnet.Client
 {
@@ -29,5 +30,7 @@ namespace CoAPnet.Client
         {
             get; set;
         }
+
+        public List<CoapMessageOption> Others { get; set; } = new List<CoapMessageOption>();
     }
 }
