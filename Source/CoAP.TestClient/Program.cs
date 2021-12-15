@@ -2,6 +2,7 @@
 using CoAPnet.Client;
 using CoAPnet.Extensions.DTLS;
 using CoAPnet.Logging;
+using CoAPnet.Protocol.Options;
 using System;
 using System.IO;
 using System.Text;
@@ -78,7 +79,7 @@ namespace CoAP.TestClient
             }
         }
 
-        static async Task Main()
+        static async Task Main8()
         {
             var coapFactory = new CoapFactory();
             coapFactory.DefaultLogger.RegisterSink(new CoapNetLoggerConsoleSink());
@@ -264,6 +265,81 @@ namespace CoAP.TestClient
                     .Build();
 
                 response = await coapClient.RequestAsync(request, CancellationToken.None);
+                PrintResponse(response);
+
+                await Task.Delay(TimeSpan.FromSeconds(10));
+            }
+        }
+
+
+        
+
+        static async Task Main()
+        {
+            const string TEST_LARGE = @"
+/-------------------------------------------------------------\
+|                 RESOURCE BLOCK NO. 1 OF 8                   |
+|               [each line contains 64 bytes]                 |
+\-------------------------------------------------------------/
+/-------------------------------------------------------------\
+|                 RESOURCE BLOCK NO. 2 OF 8                   |
+|               [each line contains 64 bytes]                 |
+\-------------------------------------------------------------/
+/-------------------------------------------------------------\
+|                 RESOURCE BLOCK NO. 3 OF 8                   |
+|               [each line contains 64 bytes]                 |
+\-------------------------------------------------------------/
+/-------------------------------------------------------------\
+|                 RESOURCE BLOCK NO. 4 OF 8                   |
+|               [each line contains 64 bytes]                 |
+\-------------------------------------------------------------/
+/-------------------------------------------------------------\
+|                 RESOURCE BLOCK NO. 5 OF 8                   |
+|               [each line contains 64 bytes]                 |
+\-------------------------------------------------------------/
+/-------------------------------------------------------------\
+|                 RESOURCE BLOCK NO. 6 OF 8                   |
+|               [each line contains 64 bytes]                 |
+\-------------------------------------------------------------/
+/-------------------------------------------------------------\
+|                 RESOURCE BLOCK NO. 7 OF 8                   |
+|               [each line contains 64 bytes]                 |
+\-------------------------------------------------------------/
+/-------------------------------------------------------------\
+|                 RESOURCE BLOCK NO. 8 OF 8                   |
+|               [each line contains 64 bytes]                 |
+\-------------------------------------------------------------/
+";
+
+            var coapFactory = new CoapFactory();
+            coapFactory.DefaultLogger.RegisterSink(new CoapNetLoggerConsoleSink());
+
+            using (var coapClient = coapFactory.CreateClient())
+            {
+                Console.WriteLine("< CONNECTING...");
+
+                var connectOptions = new CoapClientConnectOptionsBuilder()
+                    .WithHost("192.168.10.105")
+                    .Build();
+
+                await coapClient.ConnectAsync(connectOptions, CancellationToken.None).ConfigureAwait(false);
+
+                // separate
+
+                var request = new CoapRequestBuilder()
+                    .WithMethod(CoapRequestMethod.Post)
+                    .WithPath("lookback")
+                    .Build();
+
+                var _optionFactory = new CoapMessageOptionFactory();
+                request.Method = CoapRequestMethod.Post;
+                request.BlockSize = CoAPnet.Protocol.CoapBlockSizeType.BLOCK_SIZE_64;
+                request.Token = new CoapMessageToken(BitConverter.GetBytes(0xabcdef));
+                request.Options.Others.Add(_optionFactory.CreateAccept((uint)CoapMessageContentFormat.TextPlain));
+                request.Options.Others.Add(_optionFactory.CreateContentFormat(CoapMessageContentFormat.TextPlain));
+                request.Payload = System.Text.ASCIIEncoding.UTF8.GetBytes(TEST_LARGE);
+
+                var response = await coapClient.RequestAsync(request, CancellationToken.None);
                 PrintResponse(response);
 
                 await Task.Delay(TimeSpan.FromSeconds(10));

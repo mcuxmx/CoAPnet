@@ -36,12 +36,53 @@ namespace CoAPnet.Protocol.Encoding
                     writer.WriteBytes(message.Token);
                 }
 
+                
+
+                ArraySegment<byte> payload = message.BlockPayload;
+                if (message.BlockNumber > 1)
+                {
+                    uint more = message.MoreBlock ? (uint)0x08 : 0x00;
+                    uint value = message.BlockIndex << 4;
+                    value |= (uint)message.BlockSizeType;
+                    value |= more;
+                    //message.Options.Add(new CoapMessageOptionFactory().CreateBlock1(value));
+
+                    CoapMessageOption blockOption = null;
+                    foreach (CoapMessageOption o in message.Options)
+                    {
+                        if(o.Number == CoapMessageOptionNumber.Block1)
+                        {
+                            blockOption = new CoapMessageOptionFactory().CreateBlock1(value);
+                            o.Value = blockOption.Value;
+                        }
+                    }
+
+                    if(blockOption==null){
+                        message.Options.Add(new CoapMessageOptionFactory().CreateBlock1(value));
+                    }
+                }
+                else
+                {
+                    int i = 0;
+                    while ( i < message.Options.Count)
+                    {
+                        if (message.Options[i].Number == CoapMessageOptionNumber.Block1)
+                        {
+                            message.Options.RemoveAt(i);
+                            continue;
+                        }
+                        i++;
+                    }
+                }
                 EncodeOptions(message.Options, writer);
 
-                if (message.Payload.Count > 0)
+
+
+
+                if (payload.Count > 0)
                 {
                     writer.WriteByte(0xFF);// Payload Marker
-                    writer.WriteBytes(message.Payload);
+                    writer.WriteBytes(payload);
                 }
 
                 return writer.ToArray();

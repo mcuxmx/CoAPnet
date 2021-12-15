@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CoAPnet.Protocol;
+using System;
 
 namespace CoAPnet.Client
 {
@@ -9,6 +10,10 @@ namespace CoAPnet.Client
         public CoapRequestOptions Options { get; set; } = new CoapRequestOptions();
 
         public ArraySegment<byte> Payload { get; set; }
+
+        public CoapMessageToken Token { get; set; } = null;
+
+        public CoapBlockSizeType BlockSize { get; set; } = CoapBlockSizeType.BLOCK_SIZE_128;
     }
 }
 

@@ -52,6 +52,11 @@ namespace CoAPnet.Client
             }
 
             var requestMessage = _requestToMessageConverter.Convert(request);
+            if (request.Token != null) 
+            {
+                requestMessage.Token = request.Token.Value;
+            }
+            requestMessage.BlockSizeType = request.BlockSize;
 
             var responseMessage = await RequestAsync(requestMessage, cancellationToken).ConfigureAwait(false);
 
@@ -126,19 +131,29 @@ namespace CoAPnet.Client
                 throw new ArgumentNullException(nameof(requestMessage));
             }
 
-            requestMessage.Id = _messageIdProvider.Next();
+            //requestMessage.Id = _messageIdProvider.Next();
 
-            var responseAwaiter = _messageDispatcher.AddAwaiter(requestMessage.Id);
+            //var responseAwaiter = _messageDispatcher.AddAwaiter(requestMessage.Id);
             try
             {
-                await _lowLevelClient.SendAsync(requestMessage, cancellationToken).ConfigureAwait(false);
-
-                var responseMessage = await responseAwaiter.WaitOneAsync(_connectOptions.CommunicationTimeout).ConfigureAwait(false);
-
-                if (responseMessage.Code.Equals(CoapMessageCodes.Empty))
+                CoapMessage responseMessage = null;
+                do
                 {
-                    // TODO: Support message which are sent later (no piggybacking).
-                }
+                    requestMessage.Id = _messageIdProvider.Next();
+                    var responseAwaiter = _messageDispatcher.AddAwaiter(requestMessage.Id);
+
+                    await _lowLevelClient.SendAsync(requestMessage, cancellationToken).ConfigureAwait(false);
+
+                    responseMessage = await responseAwaiter.WaitOneAsync(_connectOptions.CommunicationTimeout).ConfigureAwait(false);
+
+                    if (responseMessage.Code.Equals(CoapMessageCodes.Empty))
+                    {
+                        // TODO: Support message which are sent later (no piggybacking).
+                    }
+
+                    requestMessage.BlockIndex++;
+
+                } while (requestMessage.BlockIndex < requestMessage.BlockNumber);
 
                 return responseMessage;
             }
