@@ -57,8 +57,14 @@ namespace CoAPnet.Client
                 requestMessage.Token = request.Token.Value;
             }
             requestMessage.BlockSizeType = request.BlockSize;
+            requestMessage.Type = request.Type;
 
             var responseMessage = await RequestAsync(requestMessage, cancellationToken).ConfigureAwait(false);
+
+            if (responseMessage == null)
+            {
+                return null;
+            }
 
             var payload = responseMessage.Payload;
             if (CoapClientBlockTransferReceiver.IsBlockTransfer(responseMessage))
@@ -88,7 +94,7 @@ namespace CoAPnet.Client
             requestMessage.Token = token.Value;
             requestMessage.Options.Add(new CoapMessageOptionFactory().CreateObserve(CoapObserveOptionValue.Register));
 
-            var responseMessage = await RequestAsync(requestMessage, cancellationToken).ConfigureAwait(false);
+            var responseMessage = await RequestAsync(requestMessage, cancellationToken,true).ConfigureAwait(false);
 
             var payload = responseMessage.Payload;
             if (CoapClientBlockTransferReceiver.IsBlockTransfer(responseMessage))
@@ -124,7 +130,7 @@ namespace CoAPnet.Client
             _observationManager.Deregister(observeResponse.Token);
         }
 
-        internal async Task<CoapMessage> RequestAsync(CoapMessage requestMessage, CancellationToken cancellationToken)
+        internal async Task<CoapMessage> RequestAsync(CoapMessage requestMessage, CancellationToken cancellationToken, bool Observe = false)
         {
             if (requestMessage is null)
             {
@@ -144,13 +150,23 @@ namespace CoAPnet.Client
 
                     await _lowLevelClient.SendAsync(requestMessage, cancellationToken).ConfigureAwait(false);
 
-                    responseMessage = await responseAwaiter.WaitOneAsync(_connectOptions.CommunicationTimeout).ConfigureAwait(false);
-
-                    if (responseMessage.Code.Equals(CoapMessageCodes.Empty))
+                    if (requestMessage.Type == CoapMessageType.Confirmable || Observe)
                     {
-                        // TODO: Support message which are sent later (no piggybacking).
-                    }
+                        responseMessage = await responseAwaiter.WaitOneAsync(_connectOptions.CommunicationTimeout).ConfigureAwait(false);
 
+                        if (responseMessage.Code.Equals(CoapMessageCodes.Empty))
+                        {
+                            // TODO: Support message which are sent later (no piggybacking).
+                        }
+                    }
+                    else
+                    {
+                        if (requestMessage.BlockIndex + 1 < requestMessage.BlockNumber)
+                        {
+                            await Task.Delay(Convert.ToInt32(1000 * requestMessage.Interval), cancellationToken);
+                        }
+
+                    }
                     requestMessage.BlockIndex++;
 
                 } while (requestMessage.BlockIndex < requestMessage.BlockNumber);

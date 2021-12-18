@@ -154,14 +154,17 @@ namespace CoAP.TestClient
 
         public static void PrintResponse(CoapResponse response)
         {
-            Console.WriteLine("> RESPONSE");
-            Console.WriteLine("   + Status         = " + response.StatusCode);
-            Console.WriteLine("   + Status code    = " + (int) response.StatusCode);
-            Console.WriteLine("   + Content format = " + response.Options.ContentFormat);
-            Console.WriteLine("   + Max age        = " + response.Options.MaxAge);
-            Console.WriteLine("   + E tag          = " + ByteArrayToString(response.Options.ETag));
-            Console.WriteLine("   + Payload        = " + Encoding.UTF8.GetString(response.Payload));
-            Console.WriteLine();
+            if (response != null)
+            {
+                Console.WriteLine("> RESPONSE");
+                Console.WriteLine("   + Status         = " + response.StatusCode);
+                Console.WriteLine("   + Status code    = " + (int)response.StatusCode);
+                Console.WriteLine("   + Content format = " + response.Options.ContentFormat);
+                Console.WriteLine("   + Max age        = " + response.Options.MaxAge);
+                Console.WriteLine("   + E tag          = " + ByteArrayToString(response.Options.ETag));
+                Console.WriteLine("   + Payload        = " + Encoding.UTF8.GetString(response.Payload));
+                Console.WriteLine();
+            }
         }
 
         static string ByteArrayToString(byte[] buffer)
@@ -324,7 +327,14 @@ namespace CoAP.TestClient
 
                 await coapClient.ConnectAsync(connectOptions, CancellationToken.None).ConfigureAwait(false);
 
-                // separate
+                var observeOptions = new CoapObserveOptionsBuilder()
+                    .WithPath("ntp")
+                    .WithResponseHandler(new ResponseHandler())
+                    .Build();
+
+                var observeResponse = await coapClient.ObserveAsync(observeOptions, CancellationToken.None).ConfigureAwait(false);
+               
+               // PrintResponse(observeResponse.Response);
 
                 var request = new CoapRequestBuilder()
                     .WithMethod(CoapRequestMethod.Post)
@@ -338,9 +348,14 @@ namespace CoAP.TestClient
                 request.Options.Others.Add(_optionFactory.CreateAccept((uint)CoapMessageContentFormat.TextPlain));
                 request.Options.Others.Add(_optionFactory.CreateContentFormat(CoapMessageContentFormat.TextPlain));
                 request.Payload = System.Text.ASCIIEncoding.UTF8.GetBytes(TEST_LARGE);
-
+                request.Type = CoAPnet.Protocol.CoapMessageType.NonConfirmable;
+                request.Interval = 10;
+                //request.Payload = System.Text.ASCIIEncoding.UTF8.GetBytes("12345678");
                 var response = await coapClient.RequestAsync(request, CancellationToken.None);
                 PrintResponse(response);
+
+
+
 
                 await Task.Delay(TimeSpan.FromSeconds(10));
             }

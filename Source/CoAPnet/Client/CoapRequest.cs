@@ -14,6 +14,11 @@ namespace CoAPnet.Client
         public CoapMessageToken Token { get; set; } = null;
 
         public CoapBlockSizeType BlockSize { get; set; } = CoapBlockSizeType.BLOCK_SIZE_128;
+
+        public CoapMessageType Type { get; set; } = CoapMessageType.Confirmable;
+
+        public uint Interval { get; set; } = 10;
+
     }
 }
 

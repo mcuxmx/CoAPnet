@@ -36,6 +36,8 @@ namespace CoAPnet.Protocol
             get; set;
         }
 
+
+        public uint Interval { get; set; } = 10;
         public CoapBlockSizeType BlockSizeType { get; set; } = CoapBlockSizeType.BLOCK_SIZE_128;
         public uint BlockSize
         {
