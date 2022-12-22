@@ -143,6 +143,11 @@ namespace CoAPnet.Protocol.Encoding
                 return _optionFactory.CreateSize1(DecodeUintOptionValue(value));
             }
 
+            if (number == CoapMessageOptionNumber.Size2)
+            {
+                return _optionFactory.CreateSize2(DecodeUintOptionValue(value));
+            }
+
             if (number == CoapMessageOptionNumber.Block1)
             {
                 return _optionFactory.CreateBlock1(DecodeUintOptionValue(value));

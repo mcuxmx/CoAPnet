@@ -18,6 +18,7 @@
         ProxyUri = 35,
         ProxyScheme = 39,
         Size1 = 60,
+        Size2 = 28,
 
         // RFC 7959
         Block1 = 27,

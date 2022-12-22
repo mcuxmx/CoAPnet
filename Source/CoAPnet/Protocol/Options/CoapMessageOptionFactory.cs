@@ -82,6 +82,11 @@
             return new CoapMessageOption(CoapMessageOptionNumber.Size1, new CoapMessageOptionUintValue(value));
         }
 
+        public CoapMessageOption CreateSize2(uint value)
+        {
+            return new CoapMessageOption(CoapMessageOptionNumber.Size2, new CoapMessageOptionUintValue(value));
+        }
+
         public CoapMessageOption CreateBlock1(uint value)
         {
             return new CoapMessageOption(CoapMessageOptionNumber.Block1, new CoapMessageOptionUintValue(value));
