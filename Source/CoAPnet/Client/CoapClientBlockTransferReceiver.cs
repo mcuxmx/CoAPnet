@@ -41,7 +41,7 @@ namespace CoAPnet.Client
 
         public async Task<ArraySegment<byte>> ReceiveFullPayload(CancellationToken cancellationToken)
         {
-            var receivedSize2Option = _firstResponseMessage.Options.First(o => o.Number == CoapMessageOptionNumber.Size2);
+            var receivedSize2Option = _firstResponseMessage.Options.FirstOrDefault(o => o.Number == CoapMessageOptionNumber.Size2);
             int receivedLength = 0;
 
             var receivedBlock2Option = _firstResponseMessage.Options.First(o => o.Number == CoapMessageOptionNumber.Block2);

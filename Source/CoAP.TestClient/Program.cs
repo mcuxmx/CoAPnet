@@ -200,14 +200,25 @@ namespace CoAP.TestClient
 
                 await coapClient.ConnectAsync(connectOptions, CancellationToken.None).ConfigureAwait(false);
 
+
                 // separate
 
                 var request = new CoapRequestBuilder()
                     .WithMethod(CoapRequestMethod.Get)
-                    .WithPath("separate")
+                    .WithPath("/.well-known/core")
                     .Build();
 
                 var response = await coapClient.RequestAsync(request, CancellationToken.None);
+                PrintResponse(response);
+                return;
+                // separate
+
+                request = new CoapRequestBuilder()
+                    .WithMethod(CoapRequestMethod.Get)
+                    .WithPath("separate")
+                    .Build();
+
+                response = await coapClient.RequestAsync(request, CancellationToken.None);
                 PrintResponse(response);
 
                 // hello
@@ -322,23 +333,23 @@ namespace CoAP.TestClient
                 Console.WriteLine("< CONNECTING...");
 
                 var connectOptions = new CoapClientConnectOptionsBuilder()
-                    .WithHost("192.168.10.105")
+                    .WithHost("coap.me")
                     .Build();
 
                 await coapClient.ConnectAsync(connectOptions, CancellationToken.None).ConfigureAwait(false);
 
-                var observeOptions = new CoapObserveOptionsBuilder()
-                    .WithPath("ntp")
-                    .WithResponseHandler(new ResponseHandler())
-                    .Build();
+                //var observeOptions = new CoapObserveOptionsBuilder()
+                //    .WithPath("ntp")
+                //    .WithResponseHandler(new ResponseHandler())
+                //    .Build();
 
-                var observeResponse = await coapClient.ObserveAsync(observeOptions, CancellationToken.None).ConfigureAwait(false);
+                //var observeResponse = await coapClient.ObserveAsync(observeOptions, CancellationToken.None).ConfigureAwait(false);
                
                // PrintResponse(observeResponse.Response);
 
                 var request = new CoapRequestBuilder()
                     .WithMethod(CoapRequestMethod.Post)
-                    .WithPath("lookback")
+                    .WithPath("large")
                     .Build();
 
                 var _optionFactory = new CoapMessageOptionFactory();
@@ -348,7 +359,7 @@ namespace CoAP.TestClient
                 request.Options.Others.Add(_optionFactory.CreateAccept((uint)CoapMessageContentFormat.TextPlain));
                 request.Options.Others.Add(_optionFactory.CreateContentFormat(CoapMessageContentFormat.TextPlain));
                 request.Payload = System.Text.ASCIIEncoding.UTF8.GetBytes(TEST_LARGE);
-                request.Type = CoAPnet.Protocol.CoapMessageType.NonConfirmable;
+                request.Type = CoAPnet.Protocol.CoapMessageType.Confirmable;
                 request.Interval = 10;
                 //request.Payload = System.Text.ASCIIEncoding.UTF8.GetBytes("12345678");
                 var response = await coapClient.RequestAsync(request, CancellationToken.None);
@@ -357,7 +368,7 @@ namespace CoAP.TestClient
 
 
 
-                await Task.Delay(TimeSpan.FromSeconds(10));
+                await Task.Delay(TimeSpan.FromSeconds(5));
             }
         }
     }

@@ -158,6 +158,10 @@ namespace CoAPnet.Client
                         {
                             // TODO: Support message which are sent later (no piggybacking).
                         }
+                        if (responseMessage.Code.Class==4|| responseMessage.Code.Class == 5) // response error
+                        {
+                            break;
+                        }
                     }
                     else
                     {
@@ -215,6 +219,7 @@ namespace CoAPnet.Client
                         if (!await _observationManager.TryHandleReceivedMessage(message).ConfigureAwait(false))
                         {
                             _logger.Trace(nameof(CoapClient), "Received an unexpected message ({0}).", message.Id);
+                            return;
                         }
                     }
                 }
