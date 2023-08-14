@@ -333,7 +333,7 @@ namespace CoAP.TestClient
                 Console.WriteLine("< CONNECTING...");
 
                 var connectOptions = new CoapClientConnectOptionsBuilder()
-                    .WithHost("coap.me")
+                    .WithHost("2001:140::da7a:3bff:fe3d:ca9b")
                     .Build();
 
                 await coapClient.ConnectAsync(connectOptions, CancellationToken.None).ConfigureAwait(false);
@@ -349,7 +349,7 @@ namespace CoAP.TestClient
 
                 var request = new CoapRequestBuilder()
                     .WithMethod(CoapRequestMethod.Post)
-                    .WithPath("large")
+                    .WithPath("fwUpgrade")
                     .Build();
 
                 var _optionFactory = new CoapMessageOptionFactory();
@@ -360,8 +360,9 @@ namespace CoAP.TestClient
                 request.Options.Others.Add(_optionFactory.CreateContentFormat(CoapMessageContentFormat.TextPlain));
                 request.Payload = System.Text.ASCIIEncoding.UTF8.GetBytes(TEST_LARGE);
                 request.Type = CoAPnet.Protocol.CoapMessageType.Confirmable;
-                request.Interval = 10;
+                request.Interval = 10000;
                 //request.Payload = System.Text.ASCIIEncoding.UTF8.GetBytes("12345678");
+                request.RetransmissionCount = 2;
                 var response = await coapClient.RequestAsync(request, CancellationToken.None);
                 PrintResponse(response);
 

@@ -58,6 +58,8 @@ namespace CoAPnet.Client
             }
             requestMessage.BlockSizeType = request.BlockSize;
             requestMessage.Type = request.Type;
+            requestMessage.RetransmissionCount = request.RetransmissionCount;
+            requestMessage.Interval = request.Interval;
 
             var responseMessage = await RequestAsync(requestMessage, cancellationToken).ConfigureAwait(false);
 
@@ -145,31 +147,59 @@ namespace CoAPnet.Client
                 CoapMessage responseMessage = null;
                 do
                 {
+                    int reSend = 0;
+                    bool IsNoResponse = false;
+                    bool IsResponseError = false;
                     requestMessage.Id = _messageIdProvider.Next();
-                    var responseAwaiter = _messageDispatcher.AddAwaiter(requestMessage.Id);
-
-                    await _lowLevelClient.SendAsync(requestMessage, cancellationToken).ConfigureAwait(false);
-
-                    if (requestMessage.Type == CoapMessageType.Confirmable || Observe)
+                    
+                   
+                    do
                     {
-                        responseMessage = await responseAwaiter.WaitOneAsync(_connectOptions.CommunicationTimeout).ConfigureAwait(false);
+                        var responseAwaiter = _messageDispatcher.AddAwaiter(requestMessage.Id);
+                        await _lowLevelClient.SendAsync(requestMessage, cancellationToken).ConfigureAwait(false);
 
-                        if (responseMessage.Code.Equals(CoapMessageCodes.Empty))
+                        if (requestMessage.Type == CoapMessageType.Confirmable || Observe)
                         {
-                            // TODO: Support message which are sent later (no piggybacking).
+                            try
+                            {
+                                responseMessage = await responseAwaiter.WaitOneAsync(_connectOptions.CommunicationTimeout).ConfigureAwait(false);
+                                IsNoResponse = false;
+                                _logger.Information("response code:{0}", responseMessage.Code.ToString());
+                                if (responseMessage.Code.Equals(CoapMessageCodes.Empty))
+                                {
+                                    // TODO: Support message which are sent later (no piggybacking).
+                                }
+                                if (responseMessage.Code.Class == 4 || responseMessage.Code.Class == 5) // response error
+                                {
+                                    IsResponseError = true;
+                                    break;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                _messageDispatcher.RemoveAwaiter(requestMessage.Id);
+                                IsNoResponse = true;
+                                reSend++;
+                            }
                         }
-                        if (responseMessage.Code.Class==4|| responseMessage.Code.Class == 5) // response error
+                        else
                         {
-                            break;
+                            if (requestMessage.BlockIndex + 1 < requestMessage.BlockNumber)
+                            {
+                                await Task.Delay(Convert.ToInt32(1000 * requestMessage.Interval), cancellationToken);
+                            }
+
                         }
+                    } while (!IsResponseError && IsNoResponse && reSend < requestMessage.RetransmissionCount);
+
+                    if(IsResponseError)
+                    {
+                        break;
                     }
-                    else
-                    {
-                        if (requestMessage.BlockIndex + 1 < requestMessage.BlockNumber)
-                        {
-                            await Task.Delay(Convert.ToInt32(1000 * requestMessage.Interval), cancellationToken);
-                        }
 
+                    if (IsNoResponse )
+                    {
+                        return null;
                     }
                     requestMessage.BlockIndex++;
 

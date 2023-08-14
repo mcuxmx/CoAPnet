@@ -38,6 +38,9 @@ namespace CoAPnet.Protocol
 
 
         public uint Interval { get; set; } = 10;
+
+        public uint RetransmissionCount { get; set; } = 2;
+
         public CoapBlockSizeType BlockSizeType { get; set; } = CoapBlockSizeType.BLOCK_SIZE_128;
         public uint BlockSize
         {

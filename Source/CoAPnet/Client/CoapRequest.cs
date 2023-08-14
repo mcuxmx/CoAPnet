@@ -19,6 +19,7 @@ namespace CoAPnet.Client
 
         public uint Interval { get; set; } = 10;
 
+        public uint RetransmissionCount { get; set; } = 3;
     }
 }
 
