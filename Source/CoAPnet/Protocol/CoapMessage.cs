@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace CoAPnet.Protocol
 {
-    public sealed class CoapMessage
+    public  class CoapMessage
     {
         public CoapMessageType Type
         {

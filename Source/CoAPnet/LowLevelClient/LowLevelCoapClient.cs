@@ -39,7 +39,7 @@ namespace CoAPnet.LowLevelClient
             {
                 throw new ArgumentNullException(nameof(message));
             }
-
+            _logger.Information(nameof(CoapMessage), "Send {0}", message);
             var requestMessageBuffer = _messageEncoder.Encode(message);
 
             await _syncRoot.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -64,7 +64,9 @@ namespace CoAPnet.LowLevelClient
             }
 
             Debug.Assert(_receiveBuffer.Array != null);
-            return _messageDecoder.Decode(new ArraySegment<byte>(_receiveBuffer.Array, 0, datagramLength));
+            CoapMessage message = _messageDecoder.Decode(new ArraySegment<byte>(_receiveBuffer.Array, 0, datagramLength));
+            _logger.Information(nameof(CoapMessage), "Received {0}", message);
+            return message;
         }
 
         public void Dispose()

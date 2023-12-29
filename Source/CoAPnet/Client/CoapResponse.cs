@@ -1,4 +1,6 @@
-﻿namespace CoAPnet.Client
+﻿using CoAPnet.Protocol;
+
+namespace CoAPnet.Client
 {
     public sealed class CoapResponse
     {
@@ -16,6 +18,8 @@
         {
             get; set;
         }
+
+        public CoapMessage Message{ get; set; }
     }
 }
 
